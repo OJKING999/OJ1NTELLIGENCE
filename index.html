@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="th" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="OJ1" />
+  <meta name="theme-color" content="#101b1c" />
+  <title>OJ1 — OJ1nterrigence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <!-- Modern Geometric Sans + Clean Thai + Supreme Heavy Oblique Numeric Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,700;0,800;1,800;1,900&family=Montserrat:ital,wght@0,800;0,900;1,800;1,900&family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <!-- Subtle Atmospheric Mesh -->
+  <div class="gemini-aurora aurora-1" aria-hidden="true"></div>
+  <div class="gemini-aurora aurora-2" aria-hidden="true"></div>
+
+  <!-- PIN Lock Overlay -->
+  <div id="pinLockModal" class="pin-overlay hidden" aria-hidden="true">
+    <div class="pin-card">
+      <div class="oj-custom-mark">
+        <span></span><span></span>
+      </div>
+      <div class="pin-brand">OJ1</div>
+      <p id="pinLockSubtitle" class="pin-subtitle">OJ1nterrigence • ใส่รหัส PIN 4 หลักเพื่อเข้าสู่ระบบ</p>
+      <div id="pinDots" class="pin-dots">
+        <span></span><span></span><span></span><span></span>
+      </div>
+      <p id="pinErrorMsg" class="pin-error hidden">รหัส PIN ไม่ถูกต้อง</p>
+      <div class="pin-keypad">
+        <button type="button" class="pin-key" data-key="1">1</button>
+        <button type="button" class="pin-key" data-key="2">2</button>
+        <button type="button" class="pin-key" data-key="3">3</button>
+        <button type="button" class="pin-key" data-key="4">4</button>
+        <button type="button" class="pin-key" data-key="5">5</button>
+        <button type="button" class="pin-key" data-key="6">6</button>
+        <button type="button" class="pin-key" data-key="7">7</button>
+        <button type="button" class="pin-key" data-key="8">8</button>
+        <button type="button" class="pin-key" data-key="9">9</button>
+        <button type="button" class="pin-key pin-key-ghost" data-key="clear">C</button>
+        <button type="button" class="pin-key" data-key="0">0</button>
+        <button type="button" class="pin-key pin-key-ghost" data-key="back">⌫</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOP BESPOKE NAVIGATION BAR -->
+  <header class="gemini-navbar">
+    <div class="navbar-container">
+      <!-- Left: Brand & Sync Status (OJ1 / OJ1nterrigence Identity) -->
+      <div class="brand-cluster">
+        <div class="oj-brand-emblem" aria-hidden="true">
+          <span class="emblem-ring"></span>
+          <span class="emblem-pill"></span>
+        </div>
+        <div class="brand-text-stack">
+          <span class="brand-title">OJ1</span>
+          <span class="brand-edition">OJ1nterrigence</span>
+        </div>
+        <span id="connectionBadge" class="status-pill status-online">LocalStorage (0)</span>
+      </div>
+
+      <!-- Center: Clean View Navigation Pills -->
+      <nav class="view-nav-pills" aria-label="Switch View">
+        <button type="button" class="nav-pill active" data-view="all">
+          <span>Dashboard</span>
+        </button>
+        <button type="button" class="nav-pill" data-view="credit">
+          <span>Pending Credit</span>
+          <span id="navCreditBadge" class="pill-counter">0</span>
+        </button>
+        <button type="button" class="nav-pill" data-view="ledger">
+          <span>Ledger</span>
+          <span id="navLedgerBadge" class="pill-counter">0</span>
+        </button>
+      </nav>
+
+      <!-- Right: Period Filter (Year / Month) + Quick Entry Trigger + Actions -->
+      <div class="action-cluster">
+        <!-- Scope Toggle: Month / Year / All -->
+        <div class="period-control-bar">
+          <div class="scope-segmented" role="tablist" aria-label="Period Scope">
+            <button type="button" class="scope-btn active" data-scope="month">Month</button>
+            <button type="button" class="scope-btn" data-scope="year">Year</button>
+            <button type="button" class="scope-btn" data-scope="all">All</button>
+          </div>
+
+          <select id="yearFilterSelect" class="period-select hidden" aria-label="Select Year">
+            <!-- Populated by JS -->
+          </select>
+
+          <select id="monthFilterSelect" class="period-select" aria-label="Select Month">
+            <!-- Populated by JS -->
+          </select>
+        </div>
+
+        <!-- Primary Action: Open Quick Transaction Entry Popup -->
+        <button type="button" id="btnOpenQuickAdd" class="btn-gemini-new" title="บันทึกรายการใหม่ (กดปุ่ม N)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>New Entry</span>
+        </button>
+
+        <button type="button" id="btnPrivacyToggle" class="icon-circle-btn" title="ซ่อน/แสดงตัวเลขทั้งหมด (Privacy Mode *****)" aria-label="ซ่อนหรือแสดงตัวเลข">
+          <svg id="iconEyeOpen" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+          <svg id="iconEyeClosed" class="hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+            <line x1="1" y1="1" x2="23" y2="23"/>
+          </svg>
+        </button>
+
+        <button type="button" id="btnRefresh" class="icon-circle-btn" title="รีเฟรชข้อมูลจาก LocalStorage">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
+            <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/>
+          </svg>
+        </button>
+
+        <button type="button" id="btnThemeToggle" class="icon-circle-btn" title="สลับโหมด Dark / Light">
+          <svg id="iconThemeDark" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg id="iconThemeLight" class="hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+
+        <button type="button" id="btnOpenSettings" class="icon-circle-btn" title="ตั้งค่าระบบ">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Unconfigured Banner -->
+  <div id="setupBanner" class="setup-banner hidden">
+    <div class="setup-banner-inner">
+      <span>ยังไม่ได้เชื่อมต่อ Google Sheets กดตั้งค่าเพื่อวาง Web App URL ของ OJBANK</span>
+      <button type="button" id="btnBannerSetup" class="btn-pill-sm">ตั้งค่า URL</button>
+    </div>
+  </div>
+
+  <!-- MAIN GEMINI WORKSPACE -->
+  <main class="gemini-workspace">
+
+    <!-- INSIGHT GREETING HEADER -->
+    <section class="gemini-greeting-bar">
+      <div class="greeting-left">
+        <div class="greeting-eyebrow">
+          <span class="sparkle-text">OJ1nterrigence</span>
+          <span id="activePeriodLabel" class="period-badge">เดือนปัจจุบัน</span>
+        </div>
+        <h1 id="geminiHeadline" class="greeting-headline">ภาพรวมการเงินของคุณ</h1>
+      </div>
+      <div class="greeting-right">
+        <div class="formula-chips">
+          <span id="lastSyncTimeText" class="sync-timestamp mono">พร้อมใช้งาน</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 1. MINIMAL KPI BENTO GRID (6 CARDS — INCLUDING CASH WALLET) -->
+    <section class="kpi-grid kpi-grid-6">
+      <div class="kpi-card kpi-highlight-balance">
+        <div class="kpi-head">
+          <div class="title-with-tip">
+            <span class="kpi-label">BANK BALANCE</span>
+            <span class="info-dot" data-tip="เงินคงเหลือในบัญชีธนาคารสุทธิ (ผลรวมคอลัมน์ PRICE ทั้งหมด)">?</span>
+          </div>
+          <span class="kpi-tag">All-Time</span>
+        </div>
+        <div id="statTotalPrice" class="kpi-val mono">0.00 ฿</div>
+        <div class="kpi-sub">Total Net PRICE</div>
+      </div>
+
+      <div class="kpi-card kpi-highlight-cash">
+        <div class="kpi-head">
+          <div class="title-with-tip">
+            <span class="kpi-label">CASH WALLET</span>
+            <span class="info-dot" data-tip="กระเป๋าเงินสดคงเหลือสุทธิ (คำนวณแยกต่างหากจากรายการ ACT = เงินสด โดยไม่ปนกับบัญชีธนาคาร)">?</span>
+          </div>
+          <span class="kpi-tag">All-Time</span>
+        </div>
+        <div id="statTotalCashWallet" class="kpi-val mono">0.00 ฿</div>
+        <div id="statCashWalletSub" class="kpi-sub">In +0.00 • Out 0.00</div>
+      </div>
+
+      <div class="kpi-card kpi-highlight-credit">
+        <div class="kpi-head">
+          <div class="title-with-tip">
+            <span class="kpi-label">CREDIT DEBT</span>
+            <span class="info-dot" data-tip="หนี้บัตรเครดิตคงค้างสุทธิ (ผลรวมคอลัมน์ CRE ที่ยังไม่ตัดจ่าย)">?</span>
+          </div>
+          <span class="kpi-tag">All-Time</span>
+        </div>
+        <div id="statTotalCre" class="kpi-val mono">0.00 ฿</div>
+        <div class="kpi-sub">Unpaid CRE Balance</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-head">
+          <div class="title-with-tip">
+            <span class="kpi-label">INCOME</span>
+            <span class="info-dot" data-tip="รายรับเข้าทั้งหมด (รับโอนเข้าบัญชี + รับเงินสดเข้ากระเป๋า ในช่วงเวลาที่เลือก)">?</span>
+          </div>
+          <span id="kpiPeriodBadge1" class="kpi-tag">Period</span>
+        </div>
+        <div id="monthIncomeVal" class="kpi-val mono text-pos">+0.00 ฿</div>
+        <div id="monthIncomeCount" class="kpi-sub">0 Transactions</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-head">
+          <div class="title-with-tip">
+            <span class="kpi-label">TOTAL SPEND</span>
+            <span class="info-dot" data-tip="ค่าใช้จ่ายจริงรวม (โอนออก + จ่ายเงินสด + รูดบัตร CREDIT โดยไม่นับรายการจ่ายเครดิตซ้ำ)">?</span>
+          </div>
+          <span id="kpiPeriodBadge2" class="kpi-tag">Period</span>
+        </div>
+        <div id="periodTotalSpendVal" class="kpi-val mono text-neg">0.00 ฿</div>
+        <div id="monthExpenseSub" class="kpi-sub">Bank <span id="monthExpenseVal" class="mono">0</span> • Cash <span id="monthCashSpendVal" class="mono">0</span> • Card <span id="monthCreditVal" class="mono">0</span></div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-head">
+          <div class="title-with-tip">
+            <span class="kpi-label">NET CASHFLOW</span>
+            <span class="info-dot" data-tip="กระแสเงินสดสุทธิในช่วงเวลานี้ (รายรับ หักลบ รายจ่ายโอนออกและเงินสด)">?</span>
+          </div>
+          <span id="kpiPeriodBadge3" class="kpi-tag">Period</span>
+        </div>
+        <div id="monthNetVal" class="kpi-val mono">0.00 ฿</div>
+        <div id="topSpendHighlight" class="kpi-sub">Top: —</div>
+      </div>
+    </section>
+
+    <!-- 2. DASHBOARD ANALYTICS: TOP SPENDING % RANKING + MONTHLY/YEARLY TREND -->
+    <section id="secAnalytics" class="analytics-grid">
+
+      <!-- LEFT CARD: EXPENSE RANKING BY CATEGORY WITH % SHARE & DONUT -->
+      <div class="surface-card">
+        <div class="card-top-bar">
+          <div class="title-with-tip">
+            <h2 class="card-heading">Category Breakdown (%)</h2>
+            <span id="catBreakdownTooltip" class="info-dot" data-tip="จัดอันดับค่าใช้จ่ายสูงสุดและสัดส่วน (%) แยกตามหมวดหมู่ (ไม่นับจ่ายบัตรซ้ำ)">?</span>
+          </div>
+          <div class="segmented-pills">
+            <button type="button" class="cat-mode-btn active" data-cat-mode="expense" title="ค่าใช้จ่ายจริงรวม (โอนออก + เงินสด + บัตรเครดิต)">Total Spend</button>
+            <button type="button" class="cat-mode-btn" data-cat-mode="cash" title="เฉพาะจ่ายโอนออกจากบัญชี (ไม่รวมจ่ายบิลบัตร)">Bank Out</button>
+            <button type="button" class="cat-mode-btn" data-cat-mode="cashwallet" title="เฉพาะจ่ายด้วยเงินสด (ACT = เงินสด)">Cash 💵</button>
+            <button type="button" class="cat-mode-btn" data-cat-mode="credit" title="เฉพาะยอดรูดบัตรเครดิต (CREDIT)">Credit Card</button>
+            <button type="button" class="cat-mode-btn" data-cat-mode="income" title="เฉพาะรายรับ (รับโอน + รับเงินสด)">Income</button>
+          </div>
+        </div>
+
+        <!-- Visual Donut + Top 3 Podium Summary -->
+        <div class="spending-hero-summary">
+          <div class="donut-box">
+            <div id="categoryDonutChart" class="gemini-donut">
+              <div class="donut-hole">
+                <span class="donut-caption" id="donutCenterLabel">TOTAL</span>
+                <strong id="donutCenterTotal" class="donut-total mono">0 ฿</strong>
+              </div>
+            </div>
+          </div>
+          <div id="topThreeCategoriesBox" class="top-podium-list">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Full Ranked List with % Progress Bars -->
+        <div id="categoryBreakdownList" class="category-rank-list">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- RIGHT CARD: MONTHLY & YEARLY CASHFLOW COMPARISON -->
+      <div class="surface-card">
+        <div class="card-top-bar">
+          <div class="title-with-tip">
+            <h2 class="card-heading">Cashflow Trend</h2>
+            <span class="info-dot" data-tip="สรุปรายรับ-รายจ่าย รายเดือนและรายปี (คลิกที่แถวเพื่อดูเจาะลึกเฉพาะเดือนหรือปีนั้น)">?</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <button type="button" id="btnToggleTrendSort" class="btn-ghost-sm" title="สลับการเรียงลำดับเวลา (ใหม่ไปเก่า / เก่าไปใหม่)">
+              <span id="trendSortLabel">⇅ New → Old</span>
+            </button>
+            <div class="segmented-pills">
+              <button type="button" class="trend-group-btn active" data-trend-group="month">Monthly</button>
+              <button type="button" class="trend-group-btn" data-trend-group="year">Yearly</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Visual Comparison Bars -->
+        <div id="monthlyVisualChart" class="trend-chart-container">
+          <!-- Populated by JS -->
+        </div>
+
+        <!-- Clean Summary Table -->
+        <div class="table-scroll-wrap">
+          <table class="minimal-table">
+            <thead>
+              <tr>
+                <th id="trendTableColHeader">Period</th>
+                <th class="text-right">Income (+)</th>
+                <th class="text-right">Cash Out (-)</th>
+                <th class="text-right">Credit (CRE)</th>
+                <th class="text-right">Top Spend</th>
+                <th class="text-right">Net Flow</th>
+              </tr>
+            </thead>
+            <tbody id="monthlyTableBody">
+              <tr><td colspan="6" class="empty-cell">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. CREDIT BILL MANAGER & BATCH SETTLEMENT -->
+    <section id="secCreditBill" class="surface-card credit-section">
+      <div class="card-top-bar">
+        <div class="heading-with-badge">
+          <div class="title-with-tip">
+            <h2 class="card-heading">Pending Credit</h2>
+            <span class="info-dot" data-tip="เครดิตที่รอชำระ (กำหนดธนาคาร 17 – 2 เดือนถัดไป • ชำระจริงทุกวันที่ 17–18)">?</span>
+          </div>
+          <span id="creditBillCountBadge" class="tag-badge">0 Items</span>
+          <span class="tag-badge" style="color: var(--cre-color); border: 1px solid rgba(253, 214, 99, 0.3);" title="ธนาคารกำหนดชำระวันที่ 17 ถึงวันที่ 2 ของอีกเดือน (ชำระจริงทุกวันที่ 17–18)">Cycle 17–18</span>
+        </div>
+
+        <div class="credit-total-pill">
+          <span id="cbFilterSummaryText" class="ct-caption">PENDING TOTAL</span>
+          <strong id="cbTotalAmount" class="ct-number mono">0 ฿</strong>
+        </div>
+      </div>
+
+      <!-- Filter Bar -->
+      <div class="filter-bar-surface">
+        <div class="segmented-pills" role="tablist">
+          <button type="button" class="filter-tab active" data-filter-mode="pending" title="แสดงเฉพาะเครดิตที่รอชำระหลังการจ่ายบัตรครั้งล่าสุด">Current Cycle</button>
+          <button type="button" class="filter-tab" data-filter-mode="date" title="กรองรายการบัตรเครดิตตามช่วงวันที่">Date Range</button>
+          <button type="button" class="filter-tab" data-filter-mode="note" title="กรองรายการบัตรเครดิตตามป้าย Note (เช่น 17Jan, 17Feb)">By Note</button>
+          <button type="button" class="filter-tab" data-filter-mode="all" title="แสดงประวัติรายการรูดบัตรเครดิตทั้งหมด">All History</button>
+        </div>
+
+        <!-- Pending Mode Status Info & Monthly Settlement History -->
+        <div id="creditFilterPendingBox" class="filter-controls-row">
+          <div id="lastSettlementBanner" class="settle-summary-note" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+            <span>Checking settlement status...</span>
+          </div>
+
+          <div class="settlement-history-wrap">
+            <div class="sh-header">
+              <div class="title-with-tip">
+                <span class="sh-title">Settlement History</span>
+                <span class="info-dot" data-tip="ประวัติการชำระบัตรเครดิตของแต่ละเดือนที่ผ่านมา (คลิกที่แถวเพื่อดูรายละเอียดที่ชำระในเดือนนั้น)">?</span>
+              </div>
+              <button type="button" id="btnResetToCurrentPending" class="btn-ghost-sm hidden">Back to Current</button>
+            </div>
+            <div id="pastSettlementHistoryList" class="sh-list">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Note Filter -->
+        <div id="creditFilterNoteBox" class="filter-controls-row hidden">
+          <div class="search-input-group">
+            <input
+              type="text"
+              id="cbNoteQuery"
+              class="clean-input"
+              placeholder="Search note (e.g. 17Nov, 17Dec)..."
+            />
+            <button type="button" id="btnClearNoteQuery" class="btn-ghost-sm">Clear</button>
+          </div>
+          <div id="availableNotesChips" class="chips-scroll-row"></div>
+        </div>
+
+        <!-- Date Range Filter -->
+        <div id="creditFilterDateBox" class="filter-controls-row hidden">
+          <div class="date-inputs-row">
+            <div class="inline-label-input">
+              <label for="cbStartDate">From</label>
+              <input type="date" id="cbStartDate" class="clean-input mono" />
+            </div>
+            <div class="inline-label-input">
+              <label for="cbEndDate">To</label>
+              <input type="date" id="cbEndDate" class="clean-input mono" />
+            </div>
+            <div class="chips-scroll-row">
+              <button type="button" class="chip-pill" data-range="cycle-current" title="รอบบิลวันที่ 17 เดือนก่อน ถึง 16 เดือนนี้">Cycle 17–16</button>
+              <button type="button" class="chip-pill" data-range="cycle-unpaid" title="ตั้งแต่วันที่ 17 เดือนนี้ ถึงวันนี้">Since 17th</button>
+              <button type="button" class="chip-pill" data-range="this-month">This Month</button>
+              <button type="button" class="chip-pill" data-range="clear">Reset</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Credit Breakdown + Batch Settlement Action -->
+      <div class="credit-two-col">
+        <div class="credit-list-col">
+          <div class="title-with-tip" style="margin-bottom: 10px;">
+            <span class="section-mini-label" style="margin-bottom: 0;">Category Breakdown</span>
+            <span class="info-dot" data-tip="ยอดเครดิตแยกตามหมวดหมู่ (คลิกที่หมวดเพื่อกางดูรายการย่อย)">?</span>
+          </div>
+          <div id="creditCategoryAccordion" class="accordion-list"></div>
+        </div>
+
+        <div class="credit-pay-col">
+          <div class="settle-card">
+            <div class="settle-head">
+              <span class="settle-icon">💳</span>
+              <div>
+                <div class="title-with-tip">
+                  <h3 class="settle-title">Batch Settlement</h3>
+                  <span class="info-dot" data-tip="สร้างรายการ โอนออก หมวด จ่ายเครดิต 💳 แยกตามแต่ละหมวดหมู่พร้อมกันทีเดียว (ชำระทุกวันที่ 17–18)">?</span>
+                </div>
+                <p class="settle-sub">Auto-settle by category (17th–18th)</p>
+              </div>
+            </div>
+
+            <div class="settle-inputs">
+              <div class="field-item">
+                <label for="cbPayDate">Payment Date</label>
+                <input type="date" id="cbPayDate" class="clean-input mono" />
+              </div>
+              <div class="field-item">
+                <label for="cbPayNote">Note (Optional)</label>
+                <input type="text" id="cbPayNote" class="clean-input" placeholder="Optional" />
+              </div>
+            </div>
+
+            <div id="settlePreviewSummary" class="settle-summary-note">
+              Ready to settle pending credit
+            </div>
+
+            <button type="button" id="btnBatchPayCredit" class="btn-gemini-primary full-w" disabled>
+              <span>💳 Settle Credit Bill</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. TRANSACTIONS LEDGER TABLE -->
+    <section id="secLedger" class="surface-card">
+      <div class="card-top-bar">
+        <div class="heading-with-badge">
+          <div class="title-with-tip">
+            <h2 class="card-heading">Transactions Ledger</h2>
+            <span class="info-dot" data-tip="ตารางรายการธุรกรรมทั้งหมดที่บันทึกไว้ในเบราว์เซอร์ (LocalStorage) เรียงตามวัน/เดือน/ปี">?</span>
+          </div>
+          <span id="ledgerCountBadge" class="tag-badge">0 Rows</span>
+        </div>
+
+        <div class="ledger-controls">
+          <button type="button" id="btnToggleLedgerSort" class="btn-ghost-sm" title="สลับการเรียงลำดับ (ตาม ID ล่าสุด หรือ ตามวันที่)">
+            <span id="ledgerSortLabel">⇅ ID: ล่าสุด → เก่า</span>
+          </button>
+
+          <select id="ledgerActFilter" class="clean-input">
+            <option value="ALL">All Types (ACT)</option>
+            <option value="รับโอน">รับโอน (+)</option>
+            <option value="โอนออก">โอนออก (-)</option>
+            <option value="CREDIT">CREDIT (Card)</option>
+            <option value="เงินสด">เงินสด (Cash)</option>
+          </select>
+
+          <select id="ledgerCatFilter" class="clean-input">
+            <option value="ALL">All Categories</option>
+          </select>
+
+          <input
+            type="text"
+            id="recentSearchInput"
+            class="clean-input search-w"
+            placeholder="Search ID, detail, note..."
+          />
+        </div>
+      </div>
+
+      <div class="table-scroll-wrap ledger-max-h">
+        <table class="minimal-table">
+          <thead>
+            <tr>
+              <th style="width: 74px;">ID</th>
+              <th style="width: 112px;">Date</th>
+              <th style="width: 96px;">Month</th>
+              <th style="width: 96px;">ACT</th>
+              <th style="width: 145px;">Category</th>
+              <th>Detail</th>
+              <th class="text-right" style="width: 120px;">PRICE (฿)</th>
+              <th class="text-right" style="width: 120px;">CRE (฿)</th>
+              <th style="width: 110px;">Note</th>
+              <th class="text-right" style="width: 108px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="recentTxTableBody">
+            <tr><td colspan="10" class="empty-cell">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-footer-bar">
+        <span id="ledgerShowingInfo" class="card-desc">0 Rows</span>
+        <button type="button" id="btnLoadMoreLedger" class="btn-ghost-sm hidden">Load More (+100)</button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Floating Quick Add FAB (Bottom Right for fast thumb/mouse reach) -->
+  <button type="button" id="btnFabQuickAdd" class="gemini-fab" title="บันทึกรายการใหม่ (Shortcut: N)">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    <span>บันทึกรายการใหม่</span>
+  </button>
+
+  <!-- =========================================================
+       POPUP MODAL 1: QUICK TRANSACTION ENTRY
+       ========================================================= -->
+  <div id="quickAddModal" class="modal-backdrop hidden" aria-hidden="true">
+    <div class="modal-card modal-quick-entry">
+      <div class="modal-top">
+        <div class="modal-title-group">
+          <div class="oj-brand-emblem emblem-sm" aria-hidden="true">
+            <span class="emblem-ring"></span>
+            <span class="emblem-pill"></span>
+          </div>
+          <div>
+            <h3 id="quickModalHeading" class="modal-heading">บันทึกรายการใหม่ (Quick Entry)</h3>
+            <p class="modal-sub">บันทึกข้อมูลลง <code>LocalStorage</code> ของเบราว์เซอร์ผู้ใช้งาน</p>
+          </div>
+        </div>
+        <div class="modal-top-right">
+          <span id="previewNextId" class="tag-badge mono">ID #—</span>
+          <button type="button" id="btnCloseQuickAdd" class="btn-close-circle" aria-label="ปิด">✕</button>
+        </div>
+      </div>
+
+      <form id="quickAddForm" class="quick-entry-form" autocomplete="off">
+        <!-- 1. ACT Segmented Selector (4 Types: โอนออก, รับโอน, CREDIT, เงินสด) -->
+        <div class="form-group">
+          <div class="segmented-4col" role="radiogroup" aria-label="ประเภทธุรกรรม">
+            <button type="button" class="act-btn active" data-act="โอนออก">
+              <span class="act-name">โอนออก</span>
+              <span class="act-desc">จ่ายจากบัญชี (-)</span>
+            </button>
+            <button type="button" class="act-btn" data-act="รับโอน">
+              <span class="act-name">รับโอน</span>
+              <span class="act-desc">รายรับเข้าบัญชี (+)</span>
+            </button>
+            <button type="button" class="act-btn" data-act="CREDIT">
+              <span class="act-name">CREDIT</span>
+              <span class="act-desc">รูดบัตรเครดิต</span>
+            </button>
+            <button type="button" class="act-btn" data-act="เงินสด">
+              <span class="act-name">เงินสด 💵</span>
+              <span class="act-desc">กระเป๋าเงินสด (-/+)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. Hero Amount Input -->
+        <div class="form-group">
+          <div class="label-between">
+            <label for="inputAmount" class="form-caption">จำนวนเงิน (บาท)</label>
+            <span id="actImpactHint" class="impact-badge impact-out">PRICE ติดลบ (-)</span>
+          </div>
+
+          <div class="hero-amount-field">
+            <span id="amountPrefixSign" class="amount-prefix sign-neg">-</span>
+            <input
+              type="number"
+              id="inputAmount"
+              class="amount-hero-input mono"
+              inputmode="decimal"
+              step="any"
+              min="0"
+              placeholder="0.00"
+              required
+            />
+            <span class="amount-baht">฿</span>
+          </div>
+
+          <button type="button" id="btnCreditSignToggle" class="credit-sign-switch hidden">
+            <span id="creditSignLabel">ใช้บัตรเครดิต: บันทึกค่าลบ (-) ใน CRE</span>
+            <span class="switch-link">สลับเป็น + (ส่วนลด/เงินคืน)</span>
+          </button>
+        </div>
+
+        <!-- 3. CATAGO Chips Grid -->
+        <div class="form-group">
+          <div class="label-between">
+            <label class="form-caption">หมวดหมู่ (CATAGO) — <span class="text-muted" style="font-weight: 400;">เรียงตามที่ใช้บ่อยสุด</span></label>
+            <span id="selectedCatagoBadge" class="selected-cat-tag">อาหาร 🍔</span>
+          </div>
+          <div id="catagoGrid" class="catago-chips-grid"></div>
+        </div>
+
+        <!-- Smart Credit Settlement Helper (Shows only when ACT = โอนออก & CATAGO = จ่ายเครดิต 💳) -->
+        <div id="creditPayHelperBox" class="credit-pay-helper hidden">
+          <div class="cph-header">
+            <span class="cph-title">💳 เลือกหมวดเครดิตที่รอชำระ เพื่อตัดยอดอัตโนมัติ</span>
+            <span id="cphTotalPending" class="cph-total mono">ค้างรวม 0 ฿</span>
+          </div>
+          <p class="cph-sub">คลิกที่หมวดด้านล่างเพื่อเติม <strong>จำนวนเงิน</strong> และ <strong>รายละเอียด (DETIAL)</strong> สำหรับหักลบยอดเครดิตที่ค้างอยู่ทันที</p>
+          <div id="creditPayHelperChips" class="cph-chips-grid"></div>
+        </div>
+
+        <!-- 4. Details, Date & Note -->
+        <div class="form-group form-grid-2">
+          <div class="field-item span-full">
+            <label for="inputDetail" class="form-caption">รายละเอียด (DETIAL)</label>
+            <input
+              type="text"
+              id="inputDetail"
+              class="clean-input"
+              placeholder="เช่น ข้าวมันไก่, ค่าไฟ, เติมน้ำมัน..."
+            />
+          </div>
+
+          <div class="field-item">
+            <label for="inputDate" class="form-caption">วันที่ (date)</label>
+            <input type="date" id="inputDate" class="clean-input mono" required />
+          </div>
+
+          <div class="field-item">
+            <label for="inputNote" class="form-caption">หมายเหตุ / รอบบิล (note)</label>
+            <input
+              type="text"
+              id="inputNote"
+              class="clean-input"
+              placeholder="เว้นว่างได้"
+            />
+          </div>
+        </div>
+
+        <!-- Live Preview Strip -->
+        <div class="preview-strip">
+          <div class="ps-col">
+            <span class="ps-label">Month/Year</span>
+            <strong id="previewMonthYear" class="ps-val mono">—</strong>
+          </div>
+          <div class="ps-col">
+            <span class="ps-label">PRICE</span>
+            <strong id="previewPrice" class="ps-val mono">—</strong>
+          </div>
+          <div class="ps-col">
+            <span class="ps-label">CRE</span>
+            <strong id="previewCre" class="ps-val mono">—</strong>
+          </div>
+        </div>
+
+        <div class="modal-actions-row">
+          <button type="button" id="btnCancelQuickAdd" class="btn-ghost-sm">ปิดหน้าต่าง</button>
+          <button type="submit" id="btnSubmitTx" class="btn-gemini-primary">
+            <span id="btnSubmitText">บันทึกรายการ</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       POPUP MODAL 2: BATCH PAY CREDIT CONFIRMATION
+       ========================================================= -->
+  <div id="batchPayModal" class="modal-backdrop hidden" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-top">
+        <h3 class="modal-heading">ยืนยันการบันทึกจ่ายบัตรเครดิต (Batch Insert)</h3>
+        <button type="button" id="btnCloseBatchModal" class="btn-close-circle" aria-label="ปิด">✕</button>
+      </div>
+      <div class="modal-content">
+        <p class="card-desc">
+          ระบบจะสร้างรายการ <strong>ACT = "โอนออก"</strong> และ <strong>CATAGO = "จ่ายเครดิต 💳"</strong>
+          (ใส่ค่าลบใน <code>PRICE</code> และค่าบวกใน <code>CRE</code>) แยกตามหมวดหมู่ดังนี้:
+        </p>
+        <div id="batchPayPreviewList" class="batch-preview-stack"></div>
+      </div>
+      <div class="modal-actions-row">
+        <button type="button" id="btnCancelBatchPay" class="btn-ghost-sm">ยกเลิก</button>
+        <button type="button" id="btnConfirmBatchPay" class="btn-gemini-primary">ยืนยันบันทึกทั้งหมด</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       POPUP MODAL 3: SETTINGS
+       ========================================================= -->
+  <div id="settingsModal" class="modal-backdrop hidden" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-top">
+        <h3 class="modal-heading">ตั้งค่าระบบ (Settings)</h3>
+        <button type="button" id="btnCloseSettings" class="btn-close-circle" aria-label="ปิด">✕</button>
+      </div>
+      <div class="modal-content">
+        <div class="field-item">
+          <div class="label-between">
+            <label class="form-caption">โหมดการจัดเก็บข้อมูล (Storage Mode)</label>
+            <span class="tag-badge text-pos">LocalStorage (100% Private)</span>
+          </div>
+          <p class="card-desc">
+            ข้อมูลรายรับ-รายจ่ายและยอดเงินทั้งหมดจะถูกเก็บไว้ใน <strong>LocalStorage ของเบราว์เซอร์ผู้ใช้งานเท่านั้น</strong> ไม่มีการเชื่อมต่อหรือส่งข้อมูลไปยังฐานข้อมูลภายนอก
+          </p>
+        </div>
+
+        <hr class="clean-divider" />
+
+        <div class="field-item">
+          <div class="label-between">
+            <label for="inputNewPin" class="form-caption">ตั้งรหัสผ่านเข้าแอป (PIN 4 หลัก)</label>
+            <span id="pinStatusBadge" class="tag-badge">ยังไม่ได้ตั้งรหัส</span>
+          </div>
+          <div class="btn-flex-row">
+            <input
+              type="password"
+              id="inputNewPin"
+              class="clean-input mono"
+              style="max-width: 170px;"
+              inputmode="numeric"
+              maxlength="4"
+              placeholder="ตัวเลข 4 หลัก"
+            />
+            <button type="button" id="btnSavePin" class="btn-ghost-sm">ตั้งรหัส PIN</button>
+            <button type="button" id="btnLockNow" class="btn-ghost-sm">ล็อกหน้าจอ</button>
+            <button type="button" id="btnRemovePin" class="btn-ghost-sm text-neg">ยกเลิก PIN</button>
+          </div>
+        </div>
+
+        <hr class="clean-divider" />
+
+        <div class="field-item">
+          <label class="form-caption">จัดการข้อมูลในเบราว์เซอร์ (LocalStorage)</label>
+          <div class="btn-flex-row">
+            <button type="button" id="btnLoadDemoData" class="btn-ghost-sm">โหลดข้อมูลตัวอย่าง (3 รายการ)</button>
+            <button type="button" id="btnClearLocalCache" class="btn-ghost-sm text-neg">รีเซ็ตข้อมูลทั้งหมดเป็น 0</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
