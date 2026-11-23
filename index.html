@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="OJ1" />
-  <meta name="theme-color" content="#101b1c" />
+  <meta name="theme-color" content="#212121" />
   <title>OJ1 — OJ1nterrigence</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -597,10 +597,21 @@
         <!-- 3. CATAGO Chips Grid -->
         <div class="form-group">
           <div class="label-between">
-            <label class="form-caption">หมวดหมู่ (CATAGO) — <span class="text-muted" style="font-weight: 400;">เรียงตามที่ใช้บ่อยสุด</span></label>
+            <label class="form-caption">หมวดหมู่ — <span class="text-muted" style="font-weight: 400;">เรียงตามที่ใช้บ่อยสุด</span></label>
             <span id="selectedCatagoBadge" class="selected-cat-tag">อาหาร 🍔</span>
           </div>
           <div id="catagoGrid" class="catago-chips-grid"></div>
+          <div id="customCatAdder" class="custom-cat-adder hidden">
+            <input
+              type="text"
+              id="inputNewCategory"
+              class="clean-input"
+              placeholder="พิมพ์ชื่อหมวดหมู่ใหม่ เช่น กาแฟ ☕, สัตว์เลี้ยง 🐶"
+              maxlength="32"
+            />
+            <button type="button" id="btnConfirmAddCategory" class="btn-gemini-primary btn-add-cat-save">เพิ่ม</button>
+            <button type="button" id="btnCancelAddCategory" class="btn-ghost-sm">ยกเลิก</button>
+          </div>
         </div>
 
         <!-- Smart Credit Settlement Helper (Shows only when ACT = โอนออก & CATAGO = จ่ายเครดิต 💳) -->
@@ -631,29 +642,13 @@
           </div>
 
           <div class="field-item">
-            <label for="inputNote" class="form-caption">หมายเหตุ / รอบบิล (note)</label>
+            <label for="inputNote" class="form-caption">หมายเหตุ (Note)</label>
             <input
               type="text"
               id="inputNote"
               class="clean-input"
               placeholder="เว้นว่างได้"
             />
-          </div>
-        </div>
-
-        <!-- Live Preview Strip -->
-        <div class="preview-strip">
-          <div class="ps-col">
-            <span class="ps-label">Month/Year</span>
-            <strong id="previewMonthYear" class="ps-val mono">—</strong>
-          </div>
-          <div class="ps-col">
-            <span class="ps-label">PRICE</span>
-            <strong id="previewPrice" class="ps-val mono">—</strong>
-          </div>
-          <div class="ps-col">
-            <span class="ps-label">CRE</span>
-            <strong id="previewCre" class="ps-val mono">—</strong>
           </div>
         </div>
 

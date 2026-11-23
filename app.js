@@ -5,21 +5,17 @@
  * - LocalStorage Persistence (100% client-side in the user's browser)
  */
 
-const CATEGORIES = [
+const DEFAULT_CATEGORIES = [
   'อาหาร 🍔',
-  'ส่วนตัว 🧑🏻‍🦱',
-  'จ่ายเครดิต 💳',
-  'บ้าน 🏡',
-  'แม่ 🤱🏻',
-  'เบิกแม่ 🤶🏻',
-  'รถยนตร์ 🚗',
-  'อื่นๆ',
-  'Dime 💸',
-  'ลูกหนี้ 👹',
-  'ดูดวง 🔮',
-  'รับงาน 🧑🏻‍💻',
-  'Grab 🚕',
-  'GI ⛳️'
+  'เดินทาง 🚗',
+  'ช้อปปิ้ง 🛍️',
+  'บ้าน / บิล 🏡',
+  'สุขภาพ 💊',
+  'บันเทิง 🎬',
+  'เงินเดือน / รายรับ 💰',
+  'ออม / ลงทุน 📈',
+  'ส่วนตัว ✨',
+  'อื่นๆ 📦'
 ];
 
 const SPECIAL_CREDIT_PAY_CAT = 'จ่ายเครดิต 💳';
@@ -43,8 +39,31 @@ const STORAGE_KEYS = {
   TX_CACHE: 'oj1_transactions_local',
   LAST_SYNC: 'oj1_last_saved',
   THEME: 'oj1_theme',
-  PRIVACY_MASK: 'oj1_privacy_mask'
+  PRIVACY_MASK: 'oj1_privacy_mask',
+  CUSTOM_CATEGORIES: 'oj1_custom_categories'
 };
+
+function loadCustomCategories() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.CUSTOM_CATEGORIES);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.filter(c => typeof c === 'string' && c.trim()) : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function getAllCategories() {
+  const merged = [...DEFAULT_CATEGORIES];
+  (state.customCategories || []).forEach(c => {
+    if (!merged.includes(c)) merged.push(c);
+  });
+  return merged;
+}
+
+function saveCustomCategories() {
+  localStorage.setItem(STORAGE_KEYS.CUSTOM_CATEGORIES, JSON.stringify(state.customCategories || []));
+}
 
 // ล้างคีย์เก่าที่อาจเคยเก็บ URL หรือแคชจากฐานข้อมูลเดิมในเบราว์เซอร์ออกให้หมด
 try {
@@ -83,7 +102,8 @@ const state = {
   // Quick Entry Form State
   editingTxId: null, // null = เพิ่มรายการใหม่ | number = แก้ไขรายการตามเลข ID
   selectedAct: 'โอนออก', // 'รับโอน' | 'โอนออก' | 'CREDIT'
-  selectedCatago: CATEGORIES[0],
+  selectedCatago: DEFAULT_CATEGORIES[0],
+  customCategories: loadCustomCategories(),
   creditIsPositive: false,
 
   // Data State
@@ -363,17 +383,18 @@ function encodeCashNote(signedCashAmount, userNote = '') {
  */
 function normalizeCategoryForSheet(rawCat) {
   const s = String(rawCat || '').trim();
-  if (!s) return 'อื่นๆ';
+  if (!s) return 'อื่นๆ 📦';
   const base = stripEmojiFromCatago(s);
-  const exactMatch = CATEGORIES.find(c => c === s || stripEmojiFromCatago(c) === base);
+  const allCats = getAllCategories();
+  const exactMatch = allCats.find(c => c === s || stripEmojiFromCatago(c) === base);
   return exactMatch || s;
 }
 
 /**
- * แปลงข้อความในช่อง DETIAL ของรายการ "จ่ายเครดิต 💳" (เช่น "Cr: อาหาร", "credit: ค่าน้ำมันรถ", "ส่วนตัว", "credit: mom")
+ * แปลงข้อความในช่อง DETIAL ของรายการ "จ่ายเครดิต 💳" (เช่น "Cr: อาหาร", "credit: ค่าน้ำมันรถ", "ส่วนตัว")
  * ให้ตรงกับหมวดหมู่หลัก (CATAGO) เพื่อนำไปหักล้างยอดเครดิตที่รอชำระของหมวดนั้นๆ
  */
-function matchDetailToCategory(detailStr, availableCategories = CATEGORIES) {
+function matchDetailToCategory(detailStr, availableCategories = getAllCategories()) {
   if (!detailStr) return null;
   const raw = String(detailStr).trim();
   const cleaned = raw
@@ -688,8 +709,11 @@ function initQuickAddPopup() {
     document.getElementById('inputDetail').value = '';
     document.getElementById('inputNote').value = '';
     inputDate.value = getTodayIso();
+    const adder = document.getElementById('customCatAdder');
+    if (adder) adder.classList.add('hidden');
     updateFormPreviewAndSignUI();
     modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
     setTimeout(() => {
       inputAmount.focus();
     }, 60);
@@ -698,6 +722,7 @@ function initQuickAddPopup() {
   const closeQuickModal = () => {
     state.editingTxId = null;
     modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
   };
 
   btnOpen1.addEventListener('click', openQuickModal);
@@ -729,6 +754,56 @@ function initQuickAddPopup() {
   inputDate.value = getTodayIso();
   renderCatagoGrid();
   populateLedgerCategoryFilter();
+
+  // Custom Category Add-on handlers
+  const customCatAdder = document.getElementById('customCatAdder');
+  const inputNewCategory = document.getElementById('inputNewCategory');
+  const btnConfirmAddCategory = document.getElementById('btnConfirmAddCategory');
+  const btnCancelAddCategory = document.getElementById('btnCancelAddCategory');
+
+  const commitNewCategory = () => {
+    if (!inputNewCategory) return;
+    const newCat = inputNewCategory.value.trim();
+    if (!newCat) {
+      showToast('กรุณาพิมพ์ชื่อหมวดหมู่ก่อน', 'error');
+      inputNewCategory.focus();
+      return;
+    }
+    const allCats = getAllCategories();
+    if (allCats.some(c => c.toLowerCase() === newCat.toLowerCase())) {
+      state.selectedCatago = allCats.find(c => c.toLowerCase() === newCat.toLowerCase());
+      showToast(`เลือกหมวดหมู่ "${state.selectedCatago}" แล้ว`);
+    } else {
+      state.customCategories.push(newCat);
+      saveCustomCategories();
+      state.selectedCatago = newCat;
+      showToast(`เพิ่มหมวดหมู่ "${newCat}" เรียบร้อย`, 'success');
+    }
+    inputNewCategory.value = '';
+    if (customCatAdder) customCatAdder.classList.add('hidden');
+    document.getElementById('selectedCatagoBadge').textContent = state.selectedCatago;
+    renderCatagoGrid();
+    populateLedgerCategoryFilter();
+    updateFormPreviewAndSignUI();
+  };
+
+  if (btnConfirmAddCategory) {
+    btnConfirmAddCategory.addEventListener('click', commitNewCategory);
+  }
+  if (btnCancelAddCategory && customCatAdder) {
+    btnCancelAddCategory.addEventListener('click', () => {
+      customCatAdder.classList.add('hidden');
+      if (inputNewCategory) inputNewCategory.value = '';
+    });
+  }
+  if (inputNewCategory) {
+    inputNewCategory.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        commitNewCategory();
+      }
+    });
+  }
 
   const actBtns = document.querySelectorAll('.act-btn');
   actBtns.forEach(btn => {
@@ -763,9 +838,11 @@ function renderCatagoGrid() {
   if (!grid) return;
   grid.innerHTML = '';
 
-  // นับจำนวนการใช้งานจริงของแต่ละหมวดหมู่ในชีต เพื่อเรียงหมวดที่ใช้เยอะสุดขึ้นก่อนเสมอ
+  const allCats = getAllCategories();
+
+  // นับจำนวนการใช้งานจริงของแต่ละหมวดหมู่ เพื่อเรียงหมวดที่ใช้เยอะสุดขึ้นก่อนเสมอ
   const freqMap = new Map();
-  CATEGORIES.forEach((c, idx) => freqMap.set(c, -idx)); // fallback default priority
+  allCats.forEach((c, idx) => freqMap.set(c, -idx));
 
   if (state.transactions && state.transactions.length > 0) {
     const counts = new Map();
@@ -773,7 +850,7 @@ function renderCatagoGrid() {
       const cat = String(tx.CATAGO || '').trim();
       if (cat) counts.set(cat, (counts.get(cat) || 0) + 1);
     });
-    CATEGORIES.forEach(c => {
+    allCats.forEach(c => {
       const base = stripEmojiFromCatago(c);
       let total = 0;
       counts.forEach((cnt, rawCat) => {
@@ -785,35 +862,80 @@ function renderCatagoGrid() {
     });
   }
 
-  const sortedCategories = CATEGORIES.slice().sort((a, b) => (freqMap.get(b) || 0) - (freqMap.get(a) || 0));
+  const sortedCategories = allCats.slice().sort((a, b) => (freqMap.get(b) || 0) - (freqMap.get(a) || 0));
 
   sortedCategories.forEach(cat => {
+    const isCustom = (state.customCategories || []).includes(cat);
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = `cat-chip ${cat === state.selectedCatago ? 'active' : ''}`;
-    btn.textContent = cat;
-    btn.addEventListener('click', () => {
+    btn.className = `cat-chip ${cat === state.selectedCatago ? 'active' : ''} ${isCustom ? 'cat-chip-custom' : ''}`;
+    btn.dataset.catValue = cat;
+
+    if (isCustom) {
+      btn.innerHTML = `<span class="cat-chip-label">${escapeHtml(cat)}</span><span class="cat-chip-remove" title="ลบหมวดหมู่นี้" aria-label="ลบหมวดหมู่">×</span>`;
+    } else {
+      btn.textContent = cat;
+    }
+
+    btn.addEventListener('click', (e) => {
+      if (e.target && e.target.classList.contains('cat-chip-remove')) {
+        e.stopPropagation();
+        state.customCategories = state.customCategories.filter(c => c !== cat);
+        saveCustomCategories();
+        if (state.selectedCatago === cat) {
+          state.selectedCatago = DEFAULT_CATEGORIES[0];
+          document.getElementById('selectedCatagoBadge').textContent = state.selectedCatago;
+        }
+        renderCatagoGrid();
+        populateLedgerCategoryFilter();
+        updateFormPreviewAndSignUI();
+        showToast(`ลบหมวดหมู่ "${cat}" แล้ว`);
+        return;
+      }
+
       state.selectedCatago = cat;
       document.getElementById('selectedCatagoBadge').textContent = cat;
-      grid.querySelectorAll('.cat-chip').forEach(c => {
-        c.classList.toggle('active', c.textContent === cat);
+      grid.querySelectorAll('.cat-chip[data-cat-value]').forEach(c => {
+        c.classList.toggle('active', c.dataset.catValue === cat);
       });
       updateFormPreviewAndSignUI();
     });
     grid.appendChild(btn);
   });
+
+  // ปุ่ม + เพิ่มหมวดหมู่ (Add-on)
+  const addBtn = document.createElement('button');
+  addBtn.type = 'button';
+  addBtn.className = 'cat-chip cat-chip-add';
+  addBtn.textContent = '+ เพิ่มหมวด';
+  addBtn.title = 'เพิ่มหมวดหมู่ใหม่ด้วยตัวเอง';
+  addBtn.addEventListener('click', () => {
+    const adder = document.getElementById('customCatAdder');
+    const inp = document.getElementById('inputNewCategory');
+    if (adder) {
+      adder.classList.toggle('hidden');
+      if (!adder.classList.contains('hidden') && inp) {
+        inp.focus();
+      }
+    }
+  });
+  grid.appendChild(addBtn);
 }
 
 function populateLedgerCategoryFilter() {
   const sel = document.getElementById('ledgerCatFilter');
   if (!sel) return;
-  sel.innerHTML = '<option value="ALL">ทุกหมวดหมู่ (CATAGO)</option>';
-  CATEGORIES.forEach(cat => {
+  const prevVal = sel.value || 'ALL';
+  sel.innerHTML = '<option value="ALL">ทุกหมวดหมู่</option>';
+  getAllCategories().forEach(cat => {
     const opt = document.createElement('option');
     opt.value = cat;
     opt.textContent = cat;
     sel.appendChild(opt);
   });
+  if (Array.from(sel.options).some(o => o.value === prevVal)) {
+    sel.value = prevVal;
+  }
 }
 
 function updateFormPreviewAndSignUI() {
@@ -892,14 +1014,22 @@ function updateFormPreviewAndSignUI() {
   );
 
   const displayId = state.editingTxId ? state.editingTxId : (state.lastId || 0) + 1;
-  document.getElementById('previewNextId').textContent = state.editingTxId ? `แก้ไข #${displayId}` : `ID #${displayId}`;
-  document.getElementById('previewMonthYear').textContent = monthYear;
-  if (isCashAct(state.selectedAct)) {
-    document.getElementById('previewPrice').textContent = 'เว้นว่าง (แยกบัญชี)';
-    document.getElementById('previewCre').textContent = CASH === '' ? 'เงินสด 0.00 ฿' : `เงินสด ${formatMoney(CASH, true)} ฿`;
-  } else {
-    document.getElementById('previewPrice').textContent = PRICE === '' ? 'เว้นว่าง' : `${formatMoney(PRICE, true)} ฿`;
-    document.getElementById('previewCre').textContent = CRE === '' ? 'เว้นว่าง' : `${formatMoney(CRE, true)} ฿`;
+  const previewIdEl = document.getElementById('previewNextId');
+  if (previewIdEl) {
+    previewIdEl.textContent = state.editingTxId ? `แก้ไข #${displayId}` : `ID #${displayId}`;
+  }
+  const previewMyEl = document.getElementById('previewMonthYear');
+  const previewPriceEl = document.getElementById('previewPrice');
+  const previewCreEl = document.getElementById('previewCre');
+  if (previewMyEl) previewMyEl.textContent = monthYear;
+  if (previewPriceEl && previewCreEl) {
+    if (isCashAct(state.selectedAct)) {
+      previewPriceEl.textContent = 'เว้นว่าง (แยกบัญชี)';
+      previewCreEl.textContent = CASH === '' ? 'เงินสด 0.00 ฿' : `เงินสด ${formatMoney(CASH, true)} ฿`;
+    } else {
+      previewPriceEl.textContent = PRICE === '' ? 'เว้นว่าง' : `${formatMoney(PRICE, true)} ฿`;
+      previewCreEl.textContent = CRE === '' ? 'เว้นว่าง' : `${formatMoney(CRE, true)} ฿`;
+    }
   }
 
   // แสดง/ซ่อนตัวช่วยเลือกตัดยอดเครดิตที่รอชำระ เมื่อเลือก โอนออก + จ่ายเครดิต 💳
@@ -918,7 +1048,7 @@ function openEditTransactionModal(txId) {
 
   state.editingTxId = Number(target.ID);
   state.selectedAct = isCashTx(target) ? 'เงินสด' : (target.ACT || 'โอนออก');
-  state.selectedCatago = normalizeCategoryForSheet(target.CATAGO || CATEGORIES[0]);
+  state.selectedCatago = normalizeCategoryForSheet(target.CATAGO || DEFAULT_CATEGORIES[0]);
 
   const p = target.PRICE !== null && target.PRICE !== '' && !isNaN(Number(target.PRICE)) ? Number(target.PRICE) : null;
   const c = target.CRE !== null && target.CRE !== '' && !isNaN(Number(target.CRE)) ? Number(target.CRE) : null;
@@ -957,7 +1087,9 @@ function openEditTransactionModal(txId) {
   inputNote.value = isCashAct(state.selectedAct) ? getCleanNoteForDisplay(target) : (target.note || '');
 
   updateFormPreviewAndSignUI();
-  document.getElementById('quickAddModal').classList.remove('hidden');
+  const qModal = document.getElementById('quickAddModal');
+  qModal.classList.remove('hidden');
+  qModal.setAttribute('aria-hidden', 'false');
   setTimeout(() => {
     inputAmount.focus();
   }, 60);
@@ -2416,7 +2548,7 @@ function computePendingCreditStatus() {
   );
 
   // จัดกลุ่มยอดรูดบัตรตามหมวดหมู่
-  const knownCats = Array.from(new Set([...CATEGORIES, ...cycleCreditCharges.map(t => String(t.CATAGO || 'อื่นๆ').trim())]));
+  const knownCats = Array.from(new Set([...getAllCategories(), ...cycleCreditCharges.map(t => String(t.CATAGO || 'อื่นๆ 📦').trim())]));
   const catGroups = new Map();
 
   cycleCreditCharges.forEach(tx => {
@@ -3276,7 +3408,7 @@ function loadSampleDemoTransactions() {
       date: `${ym}-01`,
       'Month/Year': ym,
       ACT: 'รับโอน',
-      CATAGO: 'รับงาน 🧑🏻‍💻',
+      CATAGO: 'เงินเดือน / รายรับ 💰',
       DETIAL: 'รายรับตัวอย่าง (Demo)',
       PRICE: 25000,
       CRE: null,
@@ -3298,7 +3430,7 @@ function loadSampleDemoTransactions() {
       date: today,
       'Month/Year': ym,
       ACT: 'CREDIT',
-      CATAGO: 'ส่วนตัว 🧑🏻‍🦱',
+      CATAGO: 'ช้อปปิ้ง 🛍️',
       DETIAL: 'ซื้อของใช้ส่วนตัว (Demo)',
       PRICE: null,
       CRE: -1200,
